@@ -1,4 +1,6 @@
 from common.utils import load_mnist
+import tensorflow as tf
+from _tensorflow.ops import conv_cond_concat, lrelu, conv2d, batch_norm
 
 class CGAN(object):
     model_name = "CGAN"
@@ -39,3 +41,32 @@ class CGAN(object):
 
         else:
             raise NotImplementedError
+
+    def discriminator(self, X, y, is_training=True, reuse=False):
+        # Network Architecture is exactly same as in infoGAN (https://arxiv.org/abs/1606.03657)
+        # Architecture : (64)4c2s-(128)4c2s_BL-FC1024_BL-FC1_S
+        with tf.variable_op_scope("discriminator", reus=reuse):
+            # merge image and label
+            y = tf.reshape(y, [self.batch_size, 1, 1, self.y_dim])
+            X = conv_cond_concat(X, y)
+
+            net = lrelu(conv2d(X, 64, 4, 4, 2, 2, name='d_conv1'))
+            net = lrelu(batch_norm())
+
+    def build_model(self):
+        image_dims = [self.input_height, self.input_width, self.c_dim]
+        batch_size = self.batch_size
+
+        """ Graph Input """
+        # images
+        self.inputs = tf.placeholder(tf.float32, [None] + image_dims, name='real_images')
+
+        # labels
+        self.labels = tf.placeholder(tf.float32, [None, self.y_dim], name='labels')
+
+        # noises
+        self.noises = tf.placeholder(tf.float32, [None, self.z_dim], name='noises')
+
+        """ Loss Function """
+        # output of D for real images
+        D_real, D_real_logits, _ = self.discriminator(self.inputs, self.labels, is_training=True, reuse=False)
