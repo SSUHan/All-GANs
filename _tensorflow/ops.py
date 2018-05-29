@@ -16,7 +16,7 @@ def conv_cond_concat(x, y):
 def conv2d(_input, output_dim, kernel_height=5, kernel_width=5, stride_height=2, stride_width=2, stddev=0.02, name='conv2d'):
     with tf.variable_scope(name):
         w = tf.get_variable('w', [kernel_height, kernel_width, _input.get_shape()[-1], output_dim],
-                            initializer=tf.truncated_normal_initializer(stddev='SAME'))
+                            initializer=tf.truncated_normal_initializer(stddev=stddev))
         conv = tf.nn.conv2d(_input, w, strides=[1, stride_height, stride_width, 1], padding='SAME')
         biases = tf.get_variable('biases', [output_dim], initializer=tf.constant_initializer(0.0))
 

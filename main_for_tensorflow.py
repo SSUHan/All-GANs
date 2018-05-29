@@ -1,0 +1,56 @@
+import argparse
+import tensorflow as tf
+from common.utils import check_data_folder, show_all_variables
+from _tensorflow.CGAN import CGAN
+
+def parse_args():
+    desc = "TensorFlow Implementation of GAN models"
+    parser = argparse.ArgumentParser(description=desc)
+
+    parser.add_argument('--gan_type', type=str, default='CGAN', help='The type of GAN', required=True)
+    parser.add_argument('--dataset', type=str, default='mnist', choices=['mnist', 'fashion-mnist', 'celebA'],
+                        help='The name of dataset')
+    parser.add_argument('--epoch', type=int, default=20, help='The number of epochs to run')
+    parser.add_argument('--batch_size', type=int, default=64, help='The size of batch')
+    parser.add_argument('--z_dim', type=int, default=62, help='Dimension of noise vector')
+    parser.add_argument('--checkpoint_dir', type=str, default='checkpoints',
+                        help='Directory name to save the checkpoints')
+    parser.add_argument('--result_dir', type=str, default='results',
+                        help='Directory name to save the generated images')
+    parser.add_argument('--log_dir', type=str, default='logs',
+                        help='Directory name to save training logs')
+    return check_args(parser.parse_args())
+
+def check_args(args):
+    check_data_folder()
+    return args
+
+def main():
+    args = parse_args()
+    print(args.gan_type)
+    with tf.Session(config=tf.ConfigProto(allow_soft_placement=True)) as sess:
+        # declare instance for GAN
+        gan = CGAN(sess,
+                    epoch=args.epoch,
+                    batch_size=args.batch_size,
+                    z_dim=args.z_dim,
+                    dataset_name=args.dataset,
+                    checkpoint_dir=args.checkpoint_dir,
+                    result_dir=args.result_dir,
+                    log_dir=args.log_dir)
+        if gan is None:
+            raise Exception("[!] There is no option for {}".format(args.gan_type))
+
+        # build graph
+        gan.build_model()
+
+        # show network architecture
+        show_all_variables()
+
+        # launch the graph in a session
+        gan.train()
+        print(" [*] Training Finished!")
+
+
+if __name__ == "__main__":
+    main()

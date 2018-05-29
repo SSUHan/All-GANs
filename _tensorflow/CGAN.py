@@ -1,9 +1,10 @@
-from common.utils import load_mnist
+from common.utils import load_mnist, save_images, check_folder
 import tensorflow as tf
 from _tensorflow.ops import conv_cond_concat, lrelu, conv2d, batch_norm, linear, concat, deconv2d
 import numpy as np
 import os
 import time
+import os.path as osp
 
 class CGAN(object):
     model_name = "CGAN"
@@ -48,7 +49,7 @@ class CGAN(object):
     def discriminator(self, X, y, is_training=True, reuse=False):
         # Network Architecture is exactly same as in infoGAN (https://arxiv.org/abs/1606.03657)
         # Architecture : (64)4c2s-(128)4c2s_BL-FC1024_BL-FC1_S
-        with tf.variable_scope("discriminator", reus=reuse):
+        with tf.variable_scope("discriminator", reuse=reuse):
 
             # merge image and label
             y = tf.reshape(y, [self.batch_size, 1, 1, self.y_dim])
@@ -69,7 +70,7 @@ class CGAN(object):
         with tf.variable_scope("generator", reuse=reuse):
 
             # merge noise and label
-            z = concat([z, y], 1)
+            z = concat([z, y], axis=1)
 
             net = tf.nn.relu(batch_norm(linear(z, 1024, scope='g_fc1'), is_training=is_training, scope='g_bn1'))
             net = tf.nn.relu(batch_norm(linear(net, 128*7*7, scope='g_fc2'), is_training=is_training, scope='g_bn2'))
@@ -87,20 +88,20 @@ class CGAN(object):
 
         """ Graph Input """
         # images
-        self.inputs = tf.placeholder(tf.float32, [None] + image_dims, name='real_images')
+        self.inputs = tf.placeholder(tf.float32, [batch_size] + image_dims, name='real_images')
 
         # labels
-        self.labels = tf.placeholder(tf.float32, [None, self.y_dim], name='labels')
+        self.labels = tf.placeholder(tf.float32, [batch_size, self.y_dim], name='labels')
 
         # noises
-        self.noises = tf.placeholder(tf.float32, [None, self.z_dim], name='noises')
+        self.noises = tf.placeholder(tf.float32, [batch_size, self.z_dim], name='noises')
 
         """ Loss Function """
         # output of D for real images
         D_real, D_real_logits, _ = self.discriminator(self.inputs, self.labels, is_training=True, reuse=False)
 
         # output of D for fake images
-        G = self.generator(self.z_dim, self.labels, is_training=True, reuse=False)
+        G = self.generator(self.noises, self.labels, is_training=True, reuse=False)
         D_fake, D_fake_logits, _ = self.discriminator(G, self.labels, is_training=True, reuse=True)
 
 
@@ -132,7 +133,7 @@ class CGAN(object):
 
         """ Testing """
         # for test
-        self.fake_images = self.generator(self.z_dim, self.labels, is_training=False, reuse=True)
+        self.fake_images = self.generator(self.noises, self.labels, is_training=False, reuse=True)
 
         """ Summary """
         d_loss_real_smy = tf.summary.scalar("d_loss_real", d_loss_real)
@@ -156,7 +157,7 @@ class CGAN(object):
         self.saver = tf.train.Saver()
 
         # summary writer
-        self.writer = tf.summary.FileWriter(os.path.join(self.log_dir, self.model_name), self.sess.graph)
+        self.writer = tf.summary.FileWriter(osp.join(self.log_dir, self.model_name), self.sess.graph)
 
         # restore checkpoint if it exists
         could_load, checkpoint_counter = self.load(self.checkpoint_dir)
@@ -185,14 +186,14 @@ class CGAN(object):
                 _, summary_str, d_loss = self.sess.run([self.d_optim, self.d_smy, self.d_loss],
                                                        feed_dict={self.inputs: batch_images,
                                                                   self.labels: batch_labels,
-                                                                  self.z_dim: batch_z})
+                                                                  self.noises: batch_z})
 
                 self.writer.add_summary(summary_str, counter)
 
                 # update G network
                 _, summary_str, g_loss = self.sess.run([self.g_optim, self.g_smy, self.g_loss],
                                                        feed_dict={self.labels: batch_labels,
-                                                                  self.z_dim: batch_z})
+                                                                  self.noises: batch_z})
                 self.writer.add_summary(summary_str, counter)
 
                 # display training status
@@ -208,4 +209,46 @@ class CGAN(object):
                     tot_num_samples = min(self.sample_num, self.batch_size)
                     manifold_h = int(np.floor(np.sqrt(tot_num_samples)))
                     manifold_w = int(np.floor(np.sqrt(tot_num_samples)))
-                    save_images()
+                    save_images(samples[:manifold_h*manifold_w, :, :, :], [manifold_h, manifold_w],
+                                image_path=osp.join(check_folder(osp.join(self.result_dir, self.model_dir)), self.model_name, '_train{}_{}.png'.format(epoch, idx)))
+
+            start_batch_id = 0
+
+            # save model
+            self.save(self.checkpoint_dir, counter)
+
+            # TODO:show temporal results
+            # self.visualize_results(epoch)
+
+        # save model for final step
+        self.save(self.checkpoint_dir, counter)
+
+    @property
+    def model_dir(self):
+        return "{}_{}_{}_{}".format(
+            self.model_name,
+            self.dataset_name,
+            self.batch_size,
+            self.z_dim
+        )
+
+    def save(self, checkpoint_dir, step):
+        checkpoint_dir = osp.join(checkpoint_dir, self.model_dir, self.model_name)
+        check_folder(checkpoint_dir)
+        self.saver.save(self.sess, osp.join(checkpoint_dir, self.model_name+".model"), global_step=step)
+
+    def load(self, checkpoint_dir):
+        import re
+        print(" [*] Reading checkpoints...")
+        checkpoint_dir = osp.join(checkpoint_dir, self.model_dir, self.model_name)
+
+        ckpt = tf.train.get_checkpoint_state(checkpoint_dir)
+        if ckpt and ckpt.model_checkpoint_path:
+            ckpt_name = osp.basename(ckpt.model_checkpoint_path)
+            self.saver.restore(self.sess, osp.join(checkpoint_dir, ckpt_name))
+            counter = int(next(re.finditer("(\d+)(?!.*\d)", ckpt_name)).group(0))
+            print(" [*] Success to read {}".format(ckpt_name))
+            return True, counter
+        else:
+            print(" [*] Failed to find a checkpoint")
+            return False, 0
