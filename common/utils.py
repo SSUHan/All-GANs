@@ -47,7 +47,7 @@ def load_mnist(dataset_name='mnist'):
     for i, label in enumerate(y):
         y_vec[i, y[i]] = 1.0
 
-    return X / 255., y_vec
+    return X, y_vec
 
 def check_data_folder():
     if not osp.exists(DATA_PATH):
@@ -81,8 +81,13 @@ def merge_images(images, size):
     else:
         raise ValueError("in merge(images,size) images parameter ''must have dimensions: HxW or HxWx3 or HxWx4")
 
+def inverse_transform(images):
+    return (images+1.)/2.
+
 def save_images(images, size, image_path):
+    images = inverse_transform(images)
     img = merge_images(images, size)
+    cv2.imwrite('tmp1.png', img)
     img = np.squeeze(img)
     cv2.imwrite(image_path, img)
 

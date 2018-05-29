@@ -3,6 +3,7 @@ import tensorflow as tf
 from common.utils import check_data_folder, show_all_variables
 from _tensorflow.CGAN import CGAN
 
+
 def parse_args():
     desc = "TensorFlow Implementation of GAN models"
     parser = argparse.ArgumentParser(description=desc)
@@ -19,11 +20,15 @@ def parse_args():
                         help='Directory name to save the generated images')
     parser.add_argument('--log_dir', type=str, default='logs',
                         help='Directory name to save training logs')
+    parser.add_argument('--sample_point', type=int, default=300,
+                        help='Directory name to save training logs')
     return check_args(parser.parse_args())
+
 
 def check_args(args):
     check_data_folder()
     return args
+
 
 def main():
     args = parse_args()
@@ -31,13 +36,14 @@ def main():
     with tf.Session(config=tf.ConfigProto(allow_soft_placement=True)) as sess:
         # declare instance for GAN
         gan = CGAN(sess,
-                    epoch=args.epoch,
-                    batch_size=args.batch_size,
-                    z_dim=args.z_dim,
-                    dataset_name=args.dataset,
-                    checkpoint_dir=args.checkpoint_dir,
-                    result_dir=args.result_dir,
-                    log_dir=args.log_dir)
+                   epoch=args.epoch,
+                   batch_size=args.batch_size,
+                   z_dim=args.z_dim,
+                   dataset_name=args.dataset,
+                   checkpoint_dir=args.checkpoint_dir,
+                   result_dir=args.result_dir,
+                   log_dir=args.log_dir,
+                   sample_point=args.sample_point)
         if gan is None:
             raise Exception("[!] There is no option for {}".format(args.gan_type))
 
