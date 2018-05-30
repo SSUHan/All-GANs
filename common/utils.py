@@ -6,6 +6,7 @@ import numpy as np
 import cv2
 import tensorflow as tf
 import tensorflow.contrib.slim as slim
+from scipy.misc import imsave
 
 DATA_PATH = osp.join('common', 'data')
 MNIST_DATA_PATH = osp.join(DATA_PATH, 'mnist')
@@ -47,7 +48,7 @@ def load_mnist(dataset_name='mnist'):
     for i, label in enumerate(y):
         y_vec[i, y[i]] = 1.0
 
-    return X, y_vec
+    return X / 255., y_vec
 
 def check_data_folder():
     if not osp.exists(DATA_PATH):
@@ -86,10 +87,8 @@ def inverse_transform(images):
 
 def save_images(images, size, image_path):
     images = inverse_transform(images)
-    img = merge_images(images, size)
-    cv2.imwrite('tmp1.png', img)
-    img = np.squeeze(img)
-    cv2.imwrite(image_path, img)
+    image = np.squeeze(merge_images(images, size))
+    return imsave(image_path, image)
 
 def show_all_variables():
     model_vars = tf.trainable_variables()

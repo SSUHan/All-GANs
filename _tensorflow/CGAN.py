@@ -214,7 +214,6 @@ class CGAN(object):
                     tot_num_samples = min(self.sample_num, self.batch_size)
                     manifold_h = int(np.floor(np.sqrt(tot_num_samples)))
                     manifold_w = int(np.floor(np.sqrt(tot_num_samples)))
-                    cv2.imwrite('tmp3.png', samples[0, :, :, :])
                     save_images(samples[:manifold_h*manifold_w, :, :, :], [manifold_h, manifold_w],
                                 image_path=osp.join(check_folder(osp.join(check_folder(self.result_dir), self.model_dir)), self.model_name + '_train{}_{}.png'.format(epoch, idx)))
 
