@@ -2,7 +2,7 @@ import argparse
 import tensorflow as tf
 from common.utils import check_data_folder, show_all_variables
 from _tensorflow.CGAN import CGAN
-
+from _tensorflow.ACGAN import ACGAN
 
 def parse_args():
     desc = "TensorFlow Implementation of GAN models"
@@ -33,19 +33,25 @@ def check_args(args):
 def main():
     args = parse_args()
     print(args.gan_type)
+
+    model_dict = {CGAN.model_name: CGAN,
+                  ACGAN.model_name: ACGAN}
+    gan = None
     with tf.Session(config=tf.ConfigProto(allow_soft_placement=True)) as sess:
         # declare instance for GAN
-        gan = CGAN(sess,
-                   epoch=args.epoch,
-                   batch_size=args.batch_size,
-                   z_dim=args.z_dim,
-                   dataset_name=args.dataset,
-                   checkpoint_dir=args.checkpoint_dir,
-                   result_dir=args.result_dir,
-                   log_dir=args.log_dir,
-                   sample_point=args.sample_point)
-        if gan is None:
-            raise Exception("[!] There is no option for {}".format(args.gan_type))
+        try:
+            gan = model_dict[args.gan_type](sess,
+                                            epoch=args.epoch,
+                                            batch_size=args.batch_size,
+                                            z_dim=args.z_dim,
+                                            dataset_name=args.dataset,
+                                            checkpoint_dir=args.checkpoint_dir,
+                                            result_dir=args.result_dir,
+                                            log_dir=args.log_dir,
+                                            sample_point=args.sample_point)
+        except KeyError as ke:
+            print("[!] There is no option for {}".format(args.gan_type))
+            exit(0)
 
         # build graph
         gan.build_model()
@@ -54,8 +60,8 @@ def main():
         show_all_variables()
 
         # launch the graph in a session
-        gan.train()
-        print(" [*] Training Finished!")
+        # gan.train()
+        # print(" [*] Training Finished!")
 
 
 if __name__ == "__main__":

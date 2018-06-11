@@ -13,7 +13,9 @@ def conv_cond_concat(x, y):
     y_shapes = y.get_shape()
     return concat([x, y*tf.ones([x_shapes[0], x_shapes[1], x_shapes[2], y_shapes[3]])], 3)
 
-def conv2d(_input, output_dim, kernel_height=5, kernel_width=5, stride_height=2, stride_width=2, stddev=0.02, name='conv2d'):
+def conv2d(_input, output_dim, kernel_hw, stride_hw, stddev=0.02, name='conv2d'):
+    kernel_height, kernel_width = kernel_hw
+    stride_height, stride_width = stride_hw
     with tf.variable_scope(name):
         w = tf.get_variable('w', [kernel_height, kernel_width, _input.get_shape()[-1], output_dim],
                             initializer=tf.truncated_normal_initializer(stddev=stddev))
@@ -22,8 +24,10 @@ def conv2d(_input, output_dim, kernel_height=5, kernel_width=5, stride_height=2,
 
         return tf.reshape(tf.nn.bias_add(conv, biases), conv.get_shape())
 
-def deconv2d(_input, output_shape, kernel_height=5, kernel_width=5, stride_height=2, stride_width=2,
+def deconv2d(_input, output_shape, kernel_hw, stride_hw,
              name='deconv2d', stddev=0.02, with_w=False):
+    kernel_height, kernel_width = kernel_hw
+    stride_height, stride_width = stride_hw
     with tf.variable_scope(name):
         w = tf.get_variable('w', [kernel_height, kernel_width, output_shape[-1], _input.get_shape()[-1]],
                             initializer=tf.random_normal_initializer(stddev=stddev))

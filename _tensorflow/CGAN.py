@@ -59,8 +59,8 @@ class CGAN(object):
             y = tf.reshape(y, [self.batch_size, 1, 1, self.y_dim])
             X = conv_cond_concat(X, y)
 
-            net = lrelu(conv2d(X, 64, 4, 4, 2, 2, name='d_conv1'))
-            net = lrelu(batch_norm(conv2d(net, 128, 4, 4, 2, 2, name='d_conv2'), is_training=is_training, scope='d_bn2'))
+            net = lrelu(conv2d(X, 64, (4, 4), (2, 2), name='d_conv1'))
+            net = lrelu(batch_norm(conv2d(net, 128, (4, 4), (2, 2), name='d_conv2'), is_training=is_training, scope='d_bn2'))
             net = tf.reshape(net, [self.batch_size, -1])
             net = lrelu(batch_norm(linear(net, 1024, scope='d_fc3'), is_training=is_training, scope='d_bn3'))
             output_logit = linear(net, 1, scope='d_fc4')
@@ -80,9 +80,9 @@ class CGAN(object):
             net = tf.nn.relu(batch_norm(linear(net, 128*7*7, scope='g_fc2'), is_training=is_training, scope='g_bn2'))
             net = tf.reshape(net, [self.batch_size, 7, 7, 128])
             net = tf.nn.relu(batch_norm(
-                deconv2d(net, [self.batch_size, 14, 14, 64], 4, 4, 2, 2, name='g_dc3'), is_training=is_training, scope='g_bn3'))
+                deconv2d(net, [self.batch_size, 14, 14, 64], (4, 4), (2, 2), name='g_dc3'), is_training=is_training, scope='g_bn3'))
 
-            out = tf.nn.sigmoid(deconv2d(net, [self.batch_size, 28, 28, 1], 4, 4, 2, 2, name='g_dc4'))
+            out = tf.nn.sigmoid(deconv2d(net, [self.batch_size, 28, 28, 1], (4, 4), (2, 2), name='g_dc4'))
 
             return out
 
