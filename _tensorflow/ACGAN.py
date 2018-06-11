@@ -204,18 +204,84 @@ class ACGAN(object):
         # loop for epoch
         start_time = time.time()
         for epoch in range(start_epoch, self.epoch):
-            pass
 
+            # get batch data
+            for idx in range(start_batch_id, self.num_batches):
+                batch_images = self.data_X[idx * self.batch_size: (idx+1) * self.batch_size]
+                batch_codes = self.data_y[idx * self.batch_size: (idx+1) * self.batch_size]
+                batch_z = np.random.uniform(-1, 1, [self.batch_size, self.z_dim]).astype(np.float32)
+
+                # update D network
+                _, smy_str_d, d_loss = self.sess.run([self.d_optim, self.d_smy, self.d_loss],
+                                                   feed_dict={self.inputs: batch_images,
+                                                              self.y: batch_codes,
+                                                              self.z: batch_z})
+                self.writer.add_summary(smy_str_d, counter)
+
+                # update G & C network
+                _, smy_str_g, g_loss, _, smy_str_c, c_loss = self.sess.run([self.g_optim, self.g_smy, self.g_loss,
+                                                                            self.c_optim, self.c_smy, self.c_loss],
+                                                                           feed_dict={self.inputs: batch_images,
+                                                                                      self.y: batch_codes,
+                                                                                      self.z: batch_z})
+                self.writer.add_summary(smy_str_g, counter)
+                self.writer.add_summary(smy_str_c, counter)
+
+                # display training status
+                counter += 1
+                print("Epoch: [%2d] [%4d/%4d] time: %4.4f, d_loss: %.8f, g_loss: %.8f" \
+                      % (epoch, idx, self.num_batches, time.time() - start_time, d_loss, g_loss))
+
+                # save training results for every {self.sample_point} steps
+                if np.mod(counter, self.sample_point) == 0:
+                    samples = self.sess.run(self.fake_images,
+                                            feed_dict={self.z: self.sample_z,
+                                                       self.y: self.test_codes})
+                    tot_num_samples = min(self.sample_num, self.batch_size)
+                    manifold_h = int(np.floor(np.sqrt(tot_num_samples)))
+                    manifold_w = int(np.floor(np.sqrt(tot_num_samples)))
+                    save_images(samples[:manifold_h * manifold_w, :, :, :], [manifold_h, manifold_w],
+                                image_path=osp.join(
+                                    check_folder(osp.join(check_folder(self.result_dir), self.model_dir)),
+                                    self.model_name + '_train{}_{}.png'.format(epoch, idx)))
+
+            start_batch_id = 0
+
+            # save model
+            self.save(self.checkpoint_dir, counter)
+
+            # show temporal results
+            # self.visualize_results(epoch)
 
     def visualize_results(self):
         pass
 
     @property
     def model_dir(self):
-        pass
+        return "{}_{}_{}_{}".format(
+            self.model_name,
+            self.dataset_name,
+            self.batch_size,
+            self.z_dim
+        )
 
-    def save(self):
-        pass
+    def save(self, checkpoint_dir, step):
+        checkpoint_dir = osp.join(checkpoint_dir, self.model_dir, self.model_name)
+        check_folder(checkpoint_dir)
+        self.saver.save(self.sess, osp.join(checkpoint_dir, self.model_name+".model"), global_step=step)
 
-    def load(self):
-        pass
+    def load(self, checkpoint_dir):
+        import re
+        print(" [*] Reading checkpoints...")
+        checkpoint_dir = osp.join(checkpoint_dir, self.model_dir, self.model_name)
+
+        ckpt = tf.train.get_checkpoint_state(checkpoint_dir)
+        if ckpt and ckpt.model_checkpoint_path:
+            ckpt_name = osp.basename(ckpt.model_checkpoint_path)
+            self.saver.restore(self.sess, osp.join(checkpoint_dir, ckpt_name))
+            counter = int(next(re.finditer("(\d+)(?!.*\d)", ckpt_name)).group(0))
+            print(" [*] Success to read {}".format(ckpt_name))
+            return True, counter
+        else:
+            print(" [*] Failed to find a checkpoint")
+            return False, 0

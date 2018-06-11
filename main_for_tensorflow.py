@@ -60,8 +60,8 @@ def main():
         show_all_variables()
 
         # launch the graph in a session
-        # gan.train()
-        # print(" [*] Training Finished!")
+        gan.train()
+        print(" [*] Training Finished!")
 
 
 if __name__ == "__main__":
