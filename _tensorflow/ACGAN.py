@@ -20,7 +20,7 @@ class ACGAN(object):
         self.log_dir = log_dir
         self.sample_point = sample_point
 
-        if dataset_name == "mnist" or dataset_name == "fashion-mnist":
+        if dataset_name == "mnist" or dataset_name == "fashion_mnist":
             # params
             self.input_height = 28
             self.input_width = 28
