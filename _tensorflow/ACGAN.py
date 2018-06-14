@@ -266,7 +266,7 @@ class ACGAN(object):
         )
 
     def save(self, checkpoint_dir, step):
-        checkpoint_dir = osp.join(check_folder(osp.join(check_folder(checkpoint_dir), self.model_dir), self.model_name))
+        checkpoint_dir = osp.join(check_folder(osp.join(check_folder(checkpoint_dir), self.model_dir)), self.model_name)
         check_folder(checkpoint_dir)
         self.saver.save(self.sess, osp.join(checkpoint_dir, self.model_name+".model"), global_step=step)
 
