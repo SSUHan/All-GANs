@@ -72,3 +72,6 @@ class BASE(object):
         else:
             print(" [*] Failed to find a checkpoint")
             return False, 0
+
+    def visualize_results(self):
+        pass
