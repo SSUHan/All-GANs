@@ -4,6 +4,8 @@ import tensorflow as tf
 
 class BASE(object):
 
+    model_name = "BASE"
+
     def __init__(self, sess, epoch, batch_size, z_dim, dataset_name,
                  checkpoint_dir, result_dir, log_dir, sample_point):
         self.sess = sess
@@ -15,6 +17,12 @@ class BASE(object):
         self.result_dir = result_dir
         self.log_dir = log_dir
         self.sample_point = sample_point
+
+        # saver to save model
+        self.saver = tf.train.Saver()
+
+        # summary writer
+        self.writer = tf.summary.FileWriter(osp.join(self.log_dir, self.model_name), self.sess.graph)
 
         if dataset_name == "mnist" or dataset_name == "fashion_mnist":
             # params

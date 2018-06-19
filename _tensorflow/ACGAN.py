@@ -150,12 +150,6 @@ class ACGAN(BASE):
         self.sample_z = np.random.uniform(-1, 1, size=(self.batch_size, self.z_dim))
         self.test_codes = self.data_y[0:self.batch_size]
 
-        # saver to save model
-        self.saver = tf.train.Saver()
-
-        # summary writer
-        self.writer = tf.summary.FileWriter(osp.join(self.log_dir, self.model_name), self.sess.graph)
-
         # restore checkpoint if it exists:
         could_load, checkpoint_counter = self.load(self.checkpoint_dir)
         if could_load:
