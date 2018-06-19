@@ -79,13 +79,15 @@ class VAE(BASE):
 
         KL_divergence = 0.5 * tf.reduce_sum(tf.square(self.mu) + tf.square(sigma) - tf.log(1e-8 + tf.square(sigma)) - 1, [1])
 
-        self.neg_loglikelihood = -tf.reduce_mean(marginal_likelihood)
+        loglikelihood = tf.reduce_mean(marginal_likelihood)
+        # self.neg_loglikelihood = -tf.reduce_mean(marginal_likelihood)
+        self.neg_loglikelihood = -loglikelihood
         self.KL_divergence = tf.reduce_mean(KL_divergence)
 
-        ELBO = -self.neg_loglikelihood - self.KL_divergence # ?
+        ELBO = loglikelihood - self.KL_divergence # ELBO <- gradient accents for maximize
         # ELBO = self.neg_loglikelihood + self.KL_divergence
 
-        self.loss = -ELBO # ?
+        self.loss = -ELBO # gradient decents for minimize
 
         """ Training """
         # optimizers
