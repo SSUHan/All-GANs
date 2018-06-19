@@ -8,6 +8,9 @@ import time
 import numpy as np
 
 class VAE(BASE):
+
+    model_name = "VAE"
+
     def __init__(self, sess, epoch, batch_size, z_dim, dataset_name,
                  checkpoint_dir, result_dir, log_dir, sample_point):
 
