@@ -124,6 +124,9 @@ class CGAN(BASE):
         self.sample_z = np.random.uniform(-1, 1, size=(self.batch_size, self.z_dim))
         self.test_labels = self.data_y[:self.batch_size]
 
+        # saver to save model
+        self.saver = tf.train.Saver()
+
         # restore checkpoint if it exists
         could_load, checkpoint_counter = self.load(self.checkpoint_dir)
         if could_load:

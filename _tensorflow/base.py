@@ -18,9 +18,6 @@ class BASE(object):
         self.log_dir = log_dir
         self.sample_point = sample_point
 
-        # saver to save model
-        self.saver = tf.train.Saver()
-
         # summary writer
         self.writer = tf.summary.FileWriter(osp.join(self.log_dir, self.model_name), self.sess.graph)
 

@@ -115,6 +115,9 @@ class VAE(BASE):
         # graph inputs for visualize training results
         self.sample_z = prior.gaussian(self.batch_size, self.z_dim)
 
+        # saver to save model
+        self.saver = tf.train.Saver()
+
         # restore checkpoint if it exists:
         could_load, checkpoint_counter = self.load(self.checkpoint_dir)
         if could_load:
