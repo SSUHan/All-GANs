@@ -31,21 +31,21 @@ class AE(BASE):
     def decoder(self, z, is_training=True, reuse=False):
         with tf.variable_scope('decoder', reuse=reuse):
             net = tf.nn.relu(batch_norm(linear(z, 1024, scope='de_fc1'), is_training=is_training, scope='de_bn1'))
-            net = tf.nn.relu(batch_norm(linear(net, 128 * 7 * 7, scope='de_fc2'), is_training=is_training, scope='de_bn2'))
-            net = tf.reshape(net, [self.batch_size, 7, 7, 128])
+            net = tf.nn.relu(batch_norm(linear(net, 128 * int(self.output_height/4) * int(self.output_width/4), scope='de_fc2'), is_training=is_training, scope='de_bn2'))
+            net = tf.reshape(net, [self.batch_size, int(self.output_height/4), int(self.output_width/4), 128])
             net = tf.nn.relu(
-                batch_norm(deconv2d(net, [self.batch_size, 14, 14, 64], kernel_hw=(4, 4), stride_hw=(2, 2), name='de_dc3'),
+                batch_norm(deconv2d(net, [self.batch_size, int(self.output_height/2), int(self.output_width/2), 64], kernel_hw=(4, 4), stride_hw=(2, 2), name='de_dc3'),
                            is_training=is_training,
                            scope='de_bn3')
             )
-            out = tf.nn.sigmoid(deconv2d(net, [self.batch_size, 28, 28, 1], kernel_hw=(4, 4), stride_hw=(2, 2), name='de_dc4'))
+            out = tf.nn.sigmoid(deconv2d(net, [self.batch_size, self.output_height, self.output_width, self.c_dim], kernel_hw=(4, 4), stride_hw=(2, 2), name='de_dc4'))
             return out
 
     def build_model(self):
-        image_dims = [self.input_height, self.input_width, self.c_dim]
+        image_dims = [self.batch_size, self.input_height, self.input_width, self.c_dim]
 
         """ Graph Input """
-        self.inputs = tf.placeholder(tf.float32, [self.batch_size] + image_dims, name='real_image')
+        self.inputs = tf.placeholder(tf.float32, image_dims, name='real_image')
 
         """ Loss Function """
         # encoding
@@ -77,22 +77,7 @@ class AE(BASE):
         # graph inputs for visualize training results
         self.test_images = self.data_X[:self.batch_size]
 
-        # saver to save model
-        self.saver = tf.train.Saver()
-
-        # restore checkpoint if it exists
-        could_load, checkpoint_counter = self.load(self.checkpoint_dir)
-        if could_load:
-            start_epoch = int(checkpoint_counter / self.num_batches)
-            start_batch_id = checkpoint_counter - start_epoch * self.num_batches
-            counter = checkpoint_counter
-            print(" [*] Load Success..!")
-        else:
-            start_epoch = 0
-            start_batch_id = 0
-            counter = 0
-            print(" [!] Load Fail, Start New Model..!")
-
+        start_epoch, start_batch_id, counter = self.before_train()
 
         # loop for epoch
         start_time = time.time()
@@ -113,19 +98,7 @@ class AE(BASE):
                       % (epoch, idx, self.num_batches, time.time() - start_time, loss))
 
                 if np.mod(counter, self.sample_point) == 0:
-                    samples = self.sess.run(self.decode_images,
-                                            feed_dict={self.inputs: self.test_images})
-                    tot_num_samples = min(self.sample_num, self.batch_size)
-                    manifold_h = int(np.floor(np.sqrt(tot_num_samples)))
-                    manifold_w = int(np.floor(np.sqrt(tot_num_samples)))
-                    save_images(self.test_images[:manifold_h * manifold_w, :, :, :], [manifold_h, manifold_w],
-                                image_path=osp.join(
-                                    check_folder(osp.join(check_folder(self.result_dir), self.model_dir)),
-                                    self.model_name + '_origin.png'))
-                    save_images(samples[:manifold_h * manifold_w, :, :, :], [manifold_h, manifold_w],
-                                image_path=osp.join(
-                                    check_folder(osp.join(check_folder(self.result_dir), self.model_dir)),
-                                    self.model_name + '_train{}_{}.png'.format(epoch, idx)))
+                    self.do_sample_point(epoch, idx)
 
                 counter += 1
 
@@ -139,3 +112,20 @@ class AE(BASE):
 
         # save mdoel for final step
         self.save(self.checkpoint_dir, counter)
+
+    def do_sample_point(self, epoch, idx):
+        samples = self.sess.run(self.decode_images,
+                                feed_dict={self.inputs: self.test_images})
+        tot_num_samples = min(self.sample_num, self.batch_size)
+        manifold_h = int(np.floor(np.sqrt(tot_num_samples)))
+        manifold_w = int(np.floor(np.sqrt(tot_num_samples)))
+
+        save_images(self.test_images[:manifold_h * manifold_w, :, :, :], [manifold_h, manifold_w],
+                    image_path=osp.join(
+                        check_folder(osp.join(check_folder(self.result_dir), self.model_dir)),
+                        self.model_name + '_origin.png'))
+
+        save_images(samples[:manifold_h * manifold_w, :, :, :], [manifold_h, manifold_w],
+                    image_path=osp.join(
+                        check_folder(osp.join(check_folder(self.result_dir), self.model_dir)),
+                        self.model_name + '_train{}_{}.png'.format(epoch, idx)))

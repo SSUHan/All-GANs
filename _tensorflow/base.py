@@ -18,9 +18,6 @@ class BASE(object):
         self.log_dir = log_dir
         self.sample_point = sample_point
 
-        # summary writer
-        self.writer = tf.summary.FileWriter(osp.join(self.log_dir, self.model_name), self.sess.graph)
-
         if dataset_name == "mnist" or dataset_name == "fashion_mnist":
             # params
             self.input_height = 28
@@ -47,6 +44,30 @@ class BASE(object):
 
         else:
             raise NotImplementedError
+
+    def before_train(self):
+
+        # summary writer
+        self.writer = tf.summary.FileWriter(osp.join(self.log_dir, self.model_name), self.sess.graph)
+
+        # saver to save model
+        self.saver = tf.train.Saver()
+
+        # restore checkpoint if it exists
+        could_load, checkpoint_counter = self.load(self.checkpoint_dir)
+        if could_load:
+            start_epoch = int(checkpoint_counter / self.num_batches)
+            start_batch_id = checkpoint_counter - start_epoch * self.num_batches
+            counter = checkpoint_counter
+            print(" [*] Load Success..!")
+        else:
+            start_epoch = 0
+            start_batch_id = 0
+            counter = 0
+            print(" [!] Load Fail, Start New Model..!")
+
+        return start_epoch, start_batch_id, counter
+
 
     @property
     def model_dir(self):
@@ -77,6 +98,3 @@ class BASE(object):
         else:
             print(" [*] Failed to find a checkpoint")
             return False, 0
-
-    def visualize_results(self):
-        pass

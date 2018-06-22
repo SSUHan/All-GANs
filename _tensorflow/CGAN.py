@@ -124,21 +124,7 @@ class CGAN(BASE):
         self.sample_z = np.random.uniform(-1, 1, size=(self.batch_size, self.z_dim))
         self.test_labels = self.data_y[:self.batch_size]
 
-        # saver to save model
-        self.saver = tf.train.Saver()
-
-        # restore checkpoint if it exists
-        could_load, checkpoint_counter = self.load(self.checkpoint_dir)
-        if could_load:
-            start_epoch = int(checkpoint_counter / self.num_batches)
-            start_batch_id = checkpoint_counter - start_epoch * self.num_batches
-            counter = checkpoint_counter
-            print(" [*] Load Success..!")
-        else:
-            start_epoch = 0
-            start_batch_id = 0
-            counter = 1
-            print(" [!] Load Fail, Start New Model..!")
+        start_epoch, start_batch_id, counter = self.before_train()
 
         # loop for epoch
         start_time = time.time()

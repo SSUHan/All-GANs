@@ -2,7 +2,7 @@ from _tensorflow.base import BASE
 import tensorflow as tf
 from _tensorflow.ops import *
 import common.prior_factory as prior
-from common.utils import save_images, check_folder
+from common.utils import save_images, check_folder, save_scattered_image
 import os.path as osp
 import time
 import numpy as np
@@ -115,21 +115,7 @@ class VAE(BASE):
         # graph inputs for visualize training results
         self.sample_z = prior.gaussian(self.batch_size, self.z_dim)
 
-        # saver to save model
-        self.saver = tf.train.Saver()
-
-        # restore checkpoint if it exists:
-        could_load, checkpoint_counter = self.load(self.checkpoint_dir)
-        if could_load:
-            start_epoch = int(checkpoint_counter / self.num_batches)
-            start_batch_id = checkpoint_counter - start_epoch * self.num_batches
-            counter = checkpoint_counter
-            print(" [*] Load Checkpoint Model Success!")
-        else:
-            start_epoch = 0
-            start_batch_id = 0
-            counter = 1
-            print(" [!] Load Checkpoint Model Fail, Start Refresh")
+        start_epoch, start_batch_id, counter = self.before_train()
 
 
         start_time = time.time()
@@ -171,4 +157,47 @@ class VAE(BASE):
             self.save(self.checkpoint_dir, counter)
 
             # show temporal results
-            # self.visualize_results(epoch)
+            self.visualize_results(epoch)
+
+    def visualize_results(self, epoch):
+        tot_num_samples=  min(self.sample_num, self.batch_size)
+        image_frame_dim = int(np.floor(np.sqrt(tot_num_samples)))
+
+        """ random condition, random noise """
+
+        z_sample = prior.gaussian(self.batch_size, self.z_dim)
+
+        samples = self.sess.run(self.fake_images, feed_dict={self.z: z_sample})
+
+        save_images(samples[:image_frame_dim * image_frame_dim, :, :, :], [image_frame_dim, image_frame_dim],
+                    image_path=osp.join(
+                        check_folder(osp.join(check_folder(self.result_dir), self.model_dir)),
+                        self.model_name + '_epoch{}_test_all_classes.png'.format(epoch)))
+
+        """ learned manifold """
+        if self.z_dim == 2:
+            assert self.z_dim == 2
+
+            z_tot = None
+            id_tot = None
+            for idx in range(0, 100):
+                # randomly sampling
+                _id = np.random.randint(0, self.num_batches)
+                batch_images = self.data_X[_id * self.batch_size: (_id + 1)*self.batch_size]
+                batch_labels = self.data_y[_id * self.batch_size: (_id + 1)*self.batch_size]
+
+                z = self.sess.run(self.mu, feed_dict={self.inputs: batch_images})
+
+                if idx == 0:
+                    z_tot = z
+                    id_tot = batch_labels
+                else:
+                    z_tot = np.concatenate((z_tot, z), axis=0)
+                    id_tot = np.concatenate((id_tot, batch_labels), axis=0)
+
+            save_scattered_image(z_tot, id_tot, -4, 4,
+                                 name=osp.join(
+                                    check_folder(osp.join(check_folder(self.result_dir), self.model_dir)),
+                                    self.model_name + '_epoch{}_learned_manifold.png'.format(epoch)))
+
+
