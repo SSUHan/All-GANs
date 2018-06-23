@@ -6,16 +6,15 @@ import time
 import numpy as np
 import os.path as osp
 
-class AE(BASE):
+class MOAE(BASE):
 
-    model_name = "AE"
+    model_name = "MOAE" # Mask OCR AutoEncoder
 
     def __init__(self, sess, epoch, batch_size, z_dim, dataset_name,
                  checkpoint_dir, result_dir, log_dir, sample_point):
 
         super().__init__(sess, epoch, batch_size, z_dim, dataset_name,
                          checkpoint_dir, result_dir, log_dir, sample_point)
-
 
     def encoder(self, x, is_training=True, reuse=False):
         with tf.variable_scope("encoder", reuse=reuse):
@@ -38,14 +37,16 @@ class AE(BASE):
                            is_training=is_training,
                            scope='de_bn3')
             )
-            out = tf.nn.sigmoid(deconv2d(net, [self.batch_size, self.output_height, self.output_width, self.input_c_dim], kernel_hw=(4, 4), stride_hw=(2, 2), name='de_dc4'))
+            out = tf.nn.sigmoid(deconv2d(net, [self.batch_size, self.output_height, self.output_width, self.output_c_dim], kernel_hw=(4, 4), stride_hw=(2, 2), name='de_dc4'))
             return out
 
     def build_model(self):
         image_dims = [self.batch_size, self.input_height, self.input_width, self.input_c_dim]
+        mask_dims = [self.batch_size, self.input_height, self.input_width, self.output_c_dim]
 
         """ Graph Input """
         self.inputs = tf.placeholder(tf.float32, image_dims, name='real_image')
+        self.masks = tf.placeholder(tf.float32, mask_dims, name='mask')
 
         """ Loss Function """
         # encoding
@@ -54,7 +55,7 @@ class AE(BASE):
         # decoding
         out = self.decoder(z, is_training=True, reuse=False)
 
-        self.loss = tf.reduce_mean(tf.square(self.inputs - out)) # MSE
+        self.loss = tf.reduce_mean(tf.square(self.masks - out)) # MSE
 
         """ Training """
         # optimizer
@@ -76,6 +77,7 @@ class AE(BASE):
 
         # graph inputs for visualize training results
         self.test_images = self.data_X[:self.batch_size]
+        self.test_masks = self.data_mask[:self.batch_size]
 
         start_epoch, start_batch_id, counter = self.before_train()
 
@@ -86,10 +88,12 @@ class AE(BASE):
             # get batch data
             for idx in range(start_batch_id, self.num_batches):
                 batch_images = self.data_X[idx*self.batch_size: (idx+1)*self.batch_size]
+                batch_masks = self.data_mask[idx*self.batch_size: (idx+1)*self.batch_size]
 
                 # update network
                 _, summary_str, loss = self.sess.run([self.optim, self.loss_smy, self.loss],
-                                                     feed_dict={self.inputs: batch_images})
+                                                     feed_dict={self.inputs: batch_images,
+                                                                self.masks: batch_masks})
 
                 self.writer.add_summary(summary_str, counter)
 

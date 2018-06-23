@@ -1,3 +1,6 @@
+import matplotlib
+matplotlib.use('Agg')
+
 import os.path as osp
 import os
 from tensorflow.examples.tutorials.mnist import input_data
@@ -8,8 +11,7 @@ import tensorflow as tf
 import tensorflow.contrib.slim as slim
 from scipy.misc import imsave
 import matplotlib.pyplot as plt
-import matplotlib
-matplotlib.use('Agg')
+
 
 DATA_PATH = osp.join('common', 'data')
 MNIST_DATA_PATH = osp.join(DATA_PATH, 'mnist')
@@ -52,6 +54,27 @@ def load_mnist(dataset_name='mnist'):
         y_vec[i, y[i]] = 1.0
 
     return X / 255., y_vec
+
+def load_ocr(dataset_name='ocr_eng_vertical_1000', input_shape=(120, 16, 3)):
+    data_dir = osp.join(DATA_PATH, dataset_name)
+    image_names = os.listdir(osp.join(data_dir, 'images'))
+    images = []
+    masks = []
+    for each_img_name in image_names:
+        images.append(cv2.resize(cv2.imread(osp.join(data_dir, 'images', each_img_name)), (input_shape[1], input_shape[0])))
+        masks.append(np.expand_dims(cv2.resize(cv2.imread(osp.join(data_dir, 'mask_1c', each_img_name), cv2.IMREAD_GRAYSCALE), (input_shape[1], input_shape[0])), axis=2))
+    data_X = np.array(images)
+    data_mask = np.array(masks)
+    print(type(data_X), data_X.shape)
+    print(type(data_mask), data_mask.shape)
+
+    seed = 818
+    np.random.seed(seed)
+    np.random.shuffle(data_X)
+    np.random.seed(seed)
+    np.random.shuffle(data_mask)
+
+    return data_X / 255., data_mask
 
 def check_data_folder():
     if not osp.exists(DATA_PATH):
@@ -121,3 +144,7 @@ def save_scattered_image(z, id, z_range_x, z_range_y, name='scattered_image.png'
     axes.set_ylim([-z_range_y, z_range_y])
     plt.grid(True)
     plt.savefig(name)
+
+
+if __name__ == "__main__":
+    load_ocr()

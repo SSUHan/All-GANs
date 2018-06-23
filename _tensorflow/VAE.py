@@ -51,7 +51,7 @@ class VAE(BASE):
 
     def build_model(self):
         # some parameters
-        image_dims = [self.input_height, self.input_width, self.c_dim]
+        image_dims = [self.input_height, self.input_width, self.input_c_dim]
 
         """ Graph Input """
         # images

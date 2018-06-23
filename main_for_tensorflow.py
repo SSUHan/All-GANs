@@ -5,6 +5,7 @@ from _tensorflow.CGAN import CGAN
 from _tensorflow.ACGAN import ACGAN
 from _tensorflow.VAE import VAE
 from _tensorflow.AE import AE
+from _tensorflow.MOAE import MOAE
 
 
 def parse_args():
@@ -12,7 +13,7 @@ def parse_args():
     parser = argparse.ArgumentParser(description=desc)
 
     parser.add_argument('--gan_type', type=str, default='CGAN', help='The type of GAN', required=True)
-    parser.add_argument('--dataset', type=str, default='mnist', choices=['mnist', 'fashion_mnist', 'celebA'],
+    parser.add_argument('--dataset', type=str, default='mnist', choices=['mnist', 'fashion_mnist', 'celebA', 'ocr_eng_vertical_1000'],
                         help='The name of dataset')
     parser.add_argument('--epoch', type=int, default=20, help='The number of epochs to run')
     parser.add_argument('--batch_size', type=int, default=64, help='The size of batch')
@@ -40,7 +41,8 @@ def main():
     model_dict = {CGAN.model_name: CGAN,
                   ACGAN.model_name: ACGAN,
                   VAE.model_name: VAE,
-                  AE.model_name: AE}
+                  AE.model_name: AE,
+                  MOAE.model_name: MOAE}
     model = None
     with tf.Session(config=tf.ConfigProto(allow_soft_placement=True)) as sess:
         # declare instance for GAN
