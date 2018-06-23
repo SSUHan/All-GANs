@@ -1,5 +1,5 @@
 import os.path as osp
-from common.utils import check_folder, load_mnist
+from common.utils import check_folder, load_mnist, load_ocr
 import tensorflow as tf
 
 class BASE(object):
@@ -27,7 +27,7 @@ class BASE(object):
 
             self.z_dim = z_dim  # dimension of noise-vector
             self.y_dim = 10  # dimension of condition-vector (label)
-            self.c_dim = 1  # dimension of color channel
+            self.input_c_dim = 1  # dimension of color channel
 
             # train
             self.lr = 0.0002
@@ -42,8 +42,34 @@ class BASE(object):
             # get number of batches for a single epoch
             self.num_batches = int(len(self.data_X) / self.batch_size)
 
+        elif dataset_name == "ocr_eng_vertical_1000":
+            self.input_height = 120
+            self.input_width = 16
+            self.input_c_dim = 3 # rgb
+
+            self.output_height = 120
+            self.output_width = 16
+            self.output_c_dim = 1 # for mask gen
+
+            self.z_dim = z_dim
+            self.y_dim = 10
+
+            # train
+            self.lr = 0.0002
+            self.beta1 = 0.5
+
+            # test
+            self.sample_num = 4  # number of generated images to be saved
+
+            # load ocr
+            self.data_X, self.data_mask = load_ocr(self.dataset_name, input_shape=(self.input_height, self.input_width, self.input_c_dim))
+
+            # get number of batches for a single epoch
+            self.num_batches = int(len(self.data_X) / self.batch_size)
+
         else:
             raise NotImplementedError
+
 
     def before_train(self):
 
