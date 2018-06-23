@@ -1,3 +1,6 @@
+import matplotlib
+matplotlib.use('Agg')
+
 import os.path as osp
 import os
 from tensorflow.examples.tutorials.mnist import input_data
@@ -8,8 +11,6 @@ import tensorflow as tf
 import tensorflow.contrib.slim as slim
 from scipy.misc import imsave
 import matplotlib.pyplot as plt
-import matplotlib
-matplotlib.use('Agg')
 
 DATA_PATH = osp.join('common', 'data')
 MNIST_DATA_PATH = osp.join(DATA_PATH, 'mnist')
