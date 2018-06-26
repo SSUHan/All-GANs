@@ -13,9 +13,9 @@ class BASE(object):
         self.batch_size = batch_size
 
         self.dataset_name = dataset_name
-        self.checkpoint_dir = checkpoint_dir + "_v{}".format(model_version)
-        self.result_dir = result_dir + "_v{}".format(model_version)
-        self.log_dir = log_dir + "_v{}".format(model_version)
+        self.checkpoint_dir = checkpoint_dir
+        self.result_dir = result_dir
+        self.log_dir = log_dir
         self.sample_point = sample_point
         self.model_verison = model_version
 
