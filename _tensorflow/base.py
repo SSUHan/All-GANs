@@ -7,16 +7,17 @@ class BASE(object):
     model_name = "BASE"
 
     def __init__(self, sess, epoch, batch_size, z_dim, dataset_name,
-                 checkpoint_dir, result_dir, log_dir, sample_point):
+                 checkpoint_dir, result_dir, log_dir, sample_point, model_version):
         self.sess = sess
         self.epoch = epoch
         self.batch_size = batch_size
 
-        self.dataset_name = dataset_name
-        self.checkpoint_dir = checkpoint_dir
-        self.result_dir = result_dir
-        self.log_dir = log_dir
+        self.dataset_name = dataset_name + "_v{}".format(model_version)
+        self.checkpoint_dir = checkpoint_dir + "_v{}".format(model_version)
+        self.result_dir = result_dir + "_v{}".format(model_version)
+        self.log_dir = log_dir + "_v{}".format(model_version)
         self.sample_point = sample_point
+        self.model_verison = model_version
 
         if dataset_name == "mnist" or dataset_name == "fashion_mnist":
             # params

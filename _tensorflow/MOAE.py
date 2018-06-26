@@ -8,22 +8,26 @@ import os.path as osp
 
 class MOAE(BASE):
 
-    model_name = "MOAE" # Mask OCR AutoEncoder
-
     def __init__(self, sess, epoch, batch_size, z_dim, dataset_name,
-                 checkpoint_dir, result_dir, log_dir, sample_point):
+                 checkpoint_dir, result_dir, log_dir, sample_point, model_version):
 
         super().__init__(sess, epoch, batch_size, z_dim, dataset_name,
-                         checkpoint_dir, result_dir, log_dir, sample_point)
+                         checkpoint_dir, result_dir, log_dir, sample_point, model_version)
+
+        self.model_name = "MOAE_v{}".format(model_version)  # Mask OCR AutoEncoder
 
     def encoder(self, x, is_training=True, reuse=False):
         with tf.variable_scope("encoder", reuse=reuse):
 
-            net = lrelu(conv2d(x, 64, kernel_hw=(4, 4), stride_hw=(2, 2), name='en_conv1'))
-            net = lrelu(batch_norm(conv2d(net, 128, kernel_hw=(4, 4), stride_hw=(2, 2), name='en_conv2'), is_training=is_training, scope='en_bn2'))
+            net = lrelu(conv2d(x, 128, kernel_hw=(4, 4), stride_hw=(2, 2), name='en_conv1'))
+            net = lrelu(batch_norm(conv2d(net, 256, kernel_hw=(4, 4), stride_hw=(2, 2), name='en_conv2'), is_training=is_training, scope='en_bn2'))
+            net = lrelu(batch_norm(conv2d(net, 256, kernel_hw=(4, 4), stride_hw=(2, 2), name='en_conv3'),
+                                   is_training=is_training, scope='en_bn3'))
+            net = lrelu(batch_norm(conv2d(net, 256, kernel_hw=(4, 4), stride_hw=(2, 2), name='en_conv4'),
+                                   is_training=is_training, scope='en_bn4'))
             net = tf.reshape(net, [self.batch_size, -1]) # Flatten
             net = lrelu(batch_norm(linear(net, 1024, scope='en_fc3'), is_training=is_training, scope='en_bn3'))
-            net = linear(net, 100, scope='en_fc4')
+            net = linear(net, 200, scope='en_fc4')
 
             return net
 

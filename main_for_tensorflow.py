@@ -26,6 +26,8 @@ def parse_args():
                         help='Directory name to save training logs')
     parser.add_argument('--sample_point', type=int, default=300,
                         help='Directory name to save training logs')
+    parser.add_argument('--version', type=int, default=1,
+                        help='Version info for this model')
     return check_args(parser.parse_args())
 
 
@@ -55,7 +57,8 @@ def main():
                                               checkpoint_dir=args.checkpoint_dir,
                                               result_dir=args.result_dir,
                                               log_dir=args.log_dir,
-                                              sample_point=args.sample_point)
+                                              sample_point=args.sample_point,
+                                              model_version=args.version)
         except KeyError as ke:
             print("[!] There is no option for {}".format(args.gan_type))
             exit(0)
