@@ -22,14 +22,15 @@ class MOAE(BASE):
         with tf.variable_scope("encoder", reuse=reuse):
 
             net = lrelu(conv2d(x, 128, kernel_hw=(4, 4), stride_hw=(2, 2), name='en_conv1'))
-            net = lrelu(batch_norm(conv2d(net, 256, kernel_hw=(4, 4), stride_hw=(2, 2), name='en_conv2'), is_training=is_training, scope='en_bn2'))
+            net = lrelu(batch_norm(conv2d(net, 256, kernel_hw=(4, 4), stride_hw=(2, 2), name='en_conv2'),
+                                   is_training=is_training, scope='en_bn2'))
             net = lrelu(batch_norm(conv2d(net, 256, kernel_hw=(4, 4), stride_hw=(2, 2), name='en_conv3'),
                                    is_training=is_training, scope='en_bn3'))
             net = lrelu(batch_norm(conv2d(net, 256, kernel_hw=(4, 4), stride_hw=(2, 2), name='en_conv4'),
                                    is_training=is_training, scope='en_bn4'))
             net = tf.reshape(net, [self.batch_size, -1]) # Flatten
-            net = lrelu(batch_norm(linear(net, 1024, scope='en_fc3'), is_training=is_training, scope='en_bn3'))
-            net = linear(net, 200, scope='en_fc4')
+            net = lrelu(batch_norm(linear(net, 1024, scope='en_fc5'), is_training=is_training, scope='en_bn5'))
+            net = linear(net, 200, scope='en_fc6')
 
             return net
 
