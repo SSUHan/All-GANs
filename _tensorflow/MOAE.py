@@ -8,13 +8,15 @@ import os.path as osp
 
 class MOAE(BASE):
 
+    model_name = "MOAE" # Mask OCR AutoEncoder
+
     def __init__(self, sess, epoch, batch_size, z_dim, dataset_name,
                  checkpoint_dir, result_dir, log_dir, sample_point, model_version):
 
         super().__init__(sess, epoch, batch_size, z_dim, dataset_name,
                          checkpoint_dir, result_dir, log_dir, sample_point, model_version)
 
-        self.model_name = "MOAE_v{}".format(model_version)  # Mask OCR AutoEncoder
+
 
     def encoder(self, x, is_training=True, reuse=False):
         with tf.variable_scope("encoder", reuse=reuse):

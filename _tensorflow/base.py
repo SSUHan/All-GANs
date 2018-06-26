@@ -99,8 +99,9 @@ class BASE(object):
 
     @property
     def model_dir(self):
-        return "{}_{}_{}_{}".format(
+        return "{}_v{}_{}_{}_{}".format(
             self.model_name,
+            self.model_verison,
             self.dataset_name,
             self.batch_size,
             self.z_dim
