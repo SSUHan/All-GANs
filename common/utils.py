@@ -78,10 +78,10 @@ def load_ocr(dataset_name='ocr_eng_vertical_1000', input_shape=(120, 16, 3), val
         test_image_names = os.listdir(osp.join(data_dir, 'images'))
         test_images = []
         test_masks = []
-        for i in range(sample_num):
-            test_images.append(cv2.resize(cv2.imread(osp.join(data_dir, 'images', test_image_names[i])), (input_shape[1], input_shape[0])))
+        for each_img_name in test_image_names:
+            test_images.append(cv2.resize(cv2.imread(osp.join(data_dir, 'images', each_img_name)), (input_shape[1], input_shape[0])))
             test_masks.append(np.expand_dims(
-                cv2.resize(cv2.imread(osp.join(data_dir, 'mask_1c', test_image_names[i]), cv2.IMREAD_GRAYSCALE),
+                cv2.resize(cv2.imread(osp.join(data_dir, 'mask_1c', each_img_name), cv2.IMREAD_GRAYSCALE),
                            (input_shape[1], input_shape[0])), axis=2))
 
         test_data_X = np.array(test_images)

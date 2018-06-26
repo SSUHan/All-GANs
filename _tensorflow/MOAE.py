@@ -76,8 +76,8 @@ class MOAE(BASE):
         tf.global_variables_initializer().run()
 
         # graph inputs for visualize training results
-        self.test_images = self.data_X[:self.batch_size]
-        self.test_masks = self.data_mask[:self.batch_size]
+        self.test_images = self.test_data_X[:self.batch_size]
+        self.test_masks = self.test_data_mask[:self.batch_size]
 
         start_epoch, start_batch_id, counter = self.before_train()
 
