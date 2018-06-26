@@ -55,7 +55,7 @@ def load_mnist(dataset_name='mnist'):
 
     return X / 255., y_vec
 
-def load_ocr(dataset_name='ocr_eng_vertical_1000', input_shape=(120, 16, 3)):
+def load_ocr(dataset_name='ocr_eng_vertical_1000', input_shape=(120, 16, 3), validate_dataset_name=None, sample_num=4):
     data_dir = osp.join(DATA_PATH, dataset_name)
     image_names = os.listdir(osp.join(data_dir, 'images'))
     images = []
@@ -73,8 +73,31 @@ def load_ocr(dataset_name='ocr_eng_vertical_1000', input_shape=(120, 16, 3)):
     np.random.shuffle(data_X)
     np.random.seed(seed)
     np.random.shuffle(data_mask)
+    if validate_dataset_name is not None:
+        data_dir = osp.join(DATA_PATH, validate_dataset_name)
+        test_image_names = os.listdir(osp.join(data_dir, 'images'))
+        test_images = []
+        test_masks = []
+        for i in range(sample_num):
+            test_images.append(cv2.resize(cv2.imread(osp.join(data_dir, 'images', test_image_names[i])), (input_shape[1], input_shape[0])))
+            test_masks.append(np.expand_dims(
+                cv2.resize(cv2.imread(osp.join(data_dir, 'mask_1c', test_image_names[i]), cv2.IMREAD_GRAYSCALE),
+                           (input_shape[1], input_shape[0])), axis=2))
 
-    return data_X / 255., data_mask
+        test_data_X = np.array(test_images)
+        test_data_mask = np.array(test_masks)
+
+        np.random.seed(seed)
+        np.random.shuffle(test_data_X)
+        np.random.seed(seed)
+        np.random.shuffle(test_data_mask)
+
+        print("** Validation Data Loaded! **")
+        print(type(test_data_X), test_data_X.shape)
+        print(type(test_data_mask), test_data_mask.shape)
+        return data_X / 255., data_mask, test_data_X / 255., test_data_mask
+
+    return data_X / 255., data_mask, None, None
 
 def check_data_folder():
     if not osp.exists(DATA_PATH):

@@ -2,8 +2,8 @@ import os.path as osp
 from common.utils import check_folder, load_mnist, load_ocr
 import tensorflow as tf
 
-class BASE(object):
 
+class BASE(object):
     model_name = "BASE"
 
     def __init__(self, sess, epoch, batch_size, z_dim, dataset_name,
@@ -45,11 +45,11 @@ class BASE(object):
         elif dataset_name == "ocr_eng_vertical_1000":
             self.input_height = 120
             self.input_width = 16
-            self.input_c_dim = 3 # rgb
+            self.input_c_dim = 3  # rgb
 
             self.output_height = 120
             self.output_width = 16
-            self.output_c_dim = 1 # for mask gen
+            self.output_c_dim = 1  # for mask gen
 
             self.z_dim = z_dim
             self.y_dim = 10
@@ -59,17 +59,19 @@ class BASE(object):
             self.beta1 = 0.5
 
             # test
-            self.sample_num = 4  # number of generated images to be saved
+            self.sample_num = 9  # number of generated images to be saved
 
             # load ocr
-            self.data_X, self.data_mask = load_ocr(self.dataset_name, input_shape=(self.input_height, self.input_width, self.input_c_dim))
+            self.data_X, self.data_mask, self.test_data_X, self.test_data_mask = load_ocr(self.dataset_name,
+                                                                                          input_shape=(self.input_height, self.input_width, self.input_c_dim),
+                                                                                          validate_dataset_name=dataset_name + '_test',
+                                                                                          sample_num=self.sample_num)
 
             # get number of batches for a single epoch
             self.num_batches = int(len(self.data_X) / self.batch_size)
 
         else:
             raise NotImplementedError
-
 
     def before_train(self):
 
@@ -93,7 +95,6 @@ class BASE(object):
             print(" [!] Load Fail, Start New Model..!")
 
         return start_epoch, start_batch_id, counter
-
 
     @property
     def model_dir(self):
