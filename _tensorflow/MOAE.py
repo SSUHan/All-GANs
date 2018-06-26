@@ -16,7 +16,7 @@ class MOAE(BASE):
         super().__init__(sess, epoch, batch_size, z_dim, dataset_name,
                          checkpoint_dir, result_dir, log_dir, sample_point, model_version)
 
-
+        self.is_first = True
 
     def encoder(self, x, is_training=True, reuse=False):
         with tf.variable_scope("encoder", reuse=reuse):
@@ -131,10 +131,17 @@ class MOAE(BASE):
         manifold_h = int(np.floor(np.sqrt(tot_num_samples)))
         manifold_w = int(np.floor(np.sqrt(tot_num_samples)))
 
-        save_images(self.test_images[:manifold_h * manifold_w, :, :, :], [manifold_h, manifold_w],
-                    image_path=osp.join(
-                        check_folder(osp.join(check_folder(self.result_dir), self.model_dir)),
-                        self.model_name + '_origin.png'))
+        if self.is_first:
+            save_images(self.test_images[:manifold_h * manifold_w, :, :, :], [manifold_h, manifold_w],
+                        image_path=osp.join(
+                            check_folder(osp.join(check_folder(self.result_dir), self.model_dir)),
+                            self.model_name + '_origin.png'))
+
+            save_images(self.test_masks[:manifold_h * manifold_w, :, :, :], [manifold_h, manifold_w],
+                        image_path=osp.join(
+                            check_folder(osp.join(check_folder(self.result_dir), self.model_dir)),
+                            self.model_name + '_origin_mask.png'))
+            self.is_first = False
 
         save_images(samples[:manifold_h * manifold_w, :, :, :], [manifold_h, manifold_w],
                     image_path=osp.join(
