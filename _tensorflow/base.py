@@ -12,7 +12,7 @@ class BASE(object):
         self.epoch = epoch
         self.batch_size = batch_size
 
-        self.dataset_name = dataset_name + "_v{}".format(model_version)
+        self.dataset_name = dataset_name
         self.checkpoint_dir = checkpoint_dir + "_v{}".format(model_version)
         self.result_dir = result_dir + "_v{}".format(model_version)
         self.log_dir = log_dir + "_v{}".format(model_version)
